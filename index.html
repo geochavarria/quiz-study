@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test · MicroAnatomía Embriología</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e2a;
+    --border: #252a38;
+    --accent: #c8a96e;
+    --accent2: #7eb8c9;
+    --correct: #5db88a;
+    --wrong: #d96b6b;
+    --text: #e8e2d6;
+    --muted: #7a7e8a;
+    --tag1: #3d2e1a;
+    --tag1t: #c8a96e;
+    --tag2: #1a2d35;
+    --tag2t: #7eb8c9;
+    --tag3: #1e2b1e;
+    --tag3t: #6dbf8a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 18px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* --- NOISE TEXTURE OVERLAY --- */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen { display: none; position: relative; z-index: 1; }
+  .screen.active { display: block; }
+
+  /* ===== WELCOME ===== */
+  #welcome {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .logo-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    padding: 6px 16px;
+    border-radius: 2px;
+    margin-bottom: 48px;
+  }
+
+  .welcome-title {
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    font-weight: 300;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+  }
+
+  .welcome-title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .welcome-sub {
+    color: var(--muted);
+    font-size: 1.1rem;
+    margin-bottom: 56px;
+    max-width: 500px;
+  }
+
+  .topic-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    width: 100%;
+    max-width: 760px;
+    margin-bottom: 48px;
+  }
+
+  .topic-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .topic-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--card-color, var(--accent));
+    transition: width 0.2s;
+  }
+
+  .topic-card:hover { border-color: var(--card-color, var(--accent)); transform: translateY(-2px); }
+  .topic-card:hover::before { width: 5px; }
+
+  .topic-card.selected {
+    border-color: var(--card-color, var(--accent));
+    background: var(--surface2);
+  }
+
+  .topic-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 12px; right: 14px;
+    font-size: 14px;
+    color: var(--card-color, var(--accent));
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .card-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    margin-bottom: 10px;
+  }
+
+  .card-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  .card-count {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .start-options {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 32px;
+  }
+
+  .btn {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem;
+    padding: 12px 32px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0d0f14;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  .btn-primary:hover { background: #d4b87e; border-color: #d4b87e; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+  }
+  .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+
+  .mode-hint {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* ===== QUIZ ===== */
+  #quiz {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  .quiz-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 48px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .quiz-topic-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 2px;
+    background: var(--tag-bg);
+    color: var(--tag-color);
+  }
+
+  .quiz-counter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .quiz-counter span { color: var(--accent); }
+
+  .progress-bar {
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+    margin-bottom: 52px;
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.4s ease;
+    border-radius: 1px;
+  }
+
+  .question-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+  }
+
+  .question-text {
+    font-size: clamp(1.3rem, 3vw, 1.65rem);
+    font-weight: 400;
+    line-height: 1.45;
+    margin-bottom: 40px;
+    color: var(--text);
+  }
+
+  /* FLASHCARD mode */
+  .flashcard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 40px;
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .flashcard:hover { border-color: var(--accent); }
+
+  .flashcard-front { display: block; }
+  .flashcard-back {
+    display: none;
+    font-style: italic;
+    color: var(--accent2);
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }
+
+  .flashcard.revealed .flashcard-front { display: none; }
+  .flashcard.revealed .flashcard-back { display: block; }
+
+  .flip-hint {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+    letter-spacing: 0.1em;
+    margin-bottom: 32px;
+  }
+
+  .flashcard-actions {
+    display: none;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+
+  .flashcard.revealed ~ .flashcard-actions { display: flex; }
+
+  .btn-correct {
+    background: transparent;
+    color: var(--correct);
+    border-color: var(--correct);
+    padding: 10px 28px;
+  }
+  .btn-correct:hover { background: var(--correct); color: #0d0f14; }
+
+  .btn-wrong {
+    background: transparent;
+    color: var(--wrong);
+    border-color: var(--wrong);
+    padding: 10px 28px;
+  }
+  .btn-wrong:hover { background: var(--wrong); color: #0d0f14; }
+
+  /* MULTIPLE CHOICE mode */
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .choice-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 20px;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.05rem;
+    color: var(--text);
+    transition: all 0.2s;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    line-height: 1.5;
+  }
+
+  .choice-btn:hover:not(:disabled) { border-color: var(--accent); background: var(--surface2); }
+
+  .choice-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 20px;
+    margin-top: 3px;
+    transition: color 0.2s;
+  }
+
+  .choice-btn.correct { border-color: var(--correct); background: rgba(93,184,138,0.08); }
+  .choice-btn.correct .choice-label { color: var(--correct); }
+  .choice-btn.wrong { border-color: var(--wrong); background: rgba(217,107,107,0.08); }
+  .choice-btn.wrong .choice-label { color: var(--wrong); }
+  .choice-btn:disabled { cursor: default; }
+
+  .feedback {
+    padding: 16px 20px;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    margin-bottom: 24px;
+    display: none;
+    line-height: 1.5;
+  }
+  .feedback.show { display: block; animation: fadeIn 0.2s ease; }
+  .feedback.correct-fb { background: rgba(93,184,138,0.1); border: 1px solid rgba(93,184,138,0.3); color: #7ed4a8; }
+  .feedback.wrong-fb { background: rgba(217,107,107,0.1); border: 1px solid rgba(217,107,107,0.3); color: #e89090; }
+
+  .next-btn-wrap { text-align: right; }
+
+  /* ===== RESULTS ===== */
+  #results {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 80px 24px;
+    text-align: center;
+  }
+
+  .results-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  .score-display {
+    font-size: clamp(4rem, 12vw, 8rem);
+    font-weight: 300;
+    line-height: 1;
+    color: var(--accent);
+    margin-bottom: 8px;
+    letter-spacing: -0.04em;
+  }
+
+  .score-label {
+    font-size: 1.1rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 48px;
+  }
+
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 56px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .stat-num.green { color: var(--correct); }
+  .stat-num.red { color: var(--wrong); }
+
+  .stat-label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .result-message {
+    font-size: 1.2rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 48px;
+    max-width: 460px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .results-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+  /* MISSED QUESTIONS */
+  .missed-section {
+    margin-top: 64px;
+    text-align: left;
+    border-top: 1px solid var(--border);
+    padding-top: 48px;
+  }
+
+  .missed-title {
+    font-size: 1.4rem;
+    font-weight: 300;
+    color: var(--muted);
+    margin-bottom: 24px;
+    font-style: italic;
+  }
+
+  .missed-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--wrong);
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+
+  .missed-q {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+  }
+
+  .missed-a {
+    font-style: italic;
+    color: var(--accent2);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .screen.active { animation: fadeIn 0.3s ease; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ===== WELCOME SCREEN ===== -->
+<div id="welcome" class="screen active">
+  <div class="logo-badge">DR. ABDÓN MACHADO · MICROANATOMÍA</div>
+
+  <h1 class="welcome-title">Cómputo 2 —<br><em>Embriología</em></h1>
+  <p class="welcome-sub">Seleccioná uno o más temas, o iniciá el test completo.</p>
+
+  <div class="topic-cards">
+    <div class="topic-card" style="--card-color:#c8a96e" data-topic="0" onclick="toggleTopic(this)">
+      <div class="card-num">TEMA 01</div>
+      <div class="card-title">Periodo Embrionario</div>
+      <div class="card-count">35 preguntas · Semanas 3–8</div>
+    </div>
+    <div class="topic-card" style="--card-color:#7eb8c9" data-topic="1" onclick="toggleTopic(this)">
+      <div class="card-num">TEMA 02</div>
+      <div class="card-title">Tubo Intestinal y Cavidades</div>
+      <div class="card-count">35 preguntas · Celoma · Diafragma</div>
+    </div>
+    <div class="topic-card" style="--card-color:#6dbf8a" data-topic="2" onclick="toggleTopic(this)">
+      <div class="card-num">TEMA 03</div>
+      <div class="card-title">Feto y Placenta</div>
+      <div class="card-count">35 preguntas · Periodo fetal</div>
+    </div>
+  </div>
+
+  <div class="start-options">
+    <button class="btn btn-ghost" onclick="startAll('flashcard')">📋 Todos · Flashcard</button>
+    <button id="btnSelected" class="btn btn-primary" onclick="startSelected('flashcard')" disabled>Iniciar selección</button>
+    <button class="btn btn-ghost" onclick="startAll('mc')">🎯 Todos · Opción múltiple</button>
+  </div>
+  <p class="mode-hint">Flashcard: revelás la respuesta y marcás si la sabías.<br>Opción múltiple: 4 opciones generadas del banco de preguntas.</p>
+</div>
+
+<!-- ===== QUIZ SCREEN ===== -->
+<div id="quiz" class="screen">
+  <div class="quiz-header">
+    <span class="quiz-topic-tag" id="topicTag" style="--tag-bg:#3d2e1a;--tag-color:#c8a96e">Periodo Embrionario</span>
+    <span class="quiz-counter">Pregunta <span id="qNum">1</span> / <span id="qTotal">35</span></span>
+  </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+  <div class="question-num" id="questionNum">01 ·</div>
+  <div class="question-text" id="questionText"></div>
+
+  <!-- FLASHCARD MODE -->
+  <div id="flashcardMode">
+    <div class="flashcard" id="flashcard" onclick="revealFlashcard()">
+      <div class="flashcard-front">
+        <span style="color:var(--muted);font-style:italic;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.1em">CLICK PARA REVELAR</span>
+      </div>
+      <div class="flashcard-back" id="flashcardAnswer"></div>
+    </div>
+    <p class="flip-hint">↩ click para ver la respuesta</p>
+    <div class="flashcard-actions" id="flashcardActions">
+      <button class="btn btn-wrong" onclick="markFlashcard(false)">✗ No lo sabía</button>
+      <button class="btn btn-correct" onclick="markFlashcard(true)">✓ Lo sabía</button>
+    </div>
+  </div>
+
+  <!-- MULTIPLE CHOICE MODE -->
+  <div id="mcMode" style="display:none">
+    <div class="choices" id="choices"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="next-btn-wrap">
+      <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="display:none">
+        Siguiente →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RESULTS SCREEN ===== -->
+<div id="results" class="screen">
+  <div class="results-badge">RESULTADOS</div>
+  <div class="score-display" id="scoreDisplay">0%</div>
+  <div class="score-label" id="scoreLabel">correctas sobre el total</div>
+  <div class="stats-row">
+    <div class="stat"><span class="stat-num green" id="statCorrect">0</span><span class="stat-label">correctas</span></div>
+    <div class="stat"><span class="stat-num red" id="statWrong">0</span><span class="stat-label">incorrectas</span></div>
+    <div class="stat"><span class="stat-num" id="statTotal" style="color:var(--muted)">0</span><span class="stat-label">preguntas</span></div>
+  </div>
+  <p class="result-message" id="resultMessage"></p>
+  <div class="results-actions">
+    <button class="btn btn-ghost" onclick="restartSame()">↺ Repetir este test</button>
+    <button class="btn btn-primary" onclick="goHome()">← Volver al inicio</button>
+  </div>
+  <div class="missed-section" id="missedSection">
+    <h2 class="missed-title">Preguntas para repasar</h2>
+    <div id="missedList"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const TOPICS = [
+  {
+    id: 0,
+    name: "Periodo Embrionario",
+    tagBg: "#3d2e1a", tagColor: "#c8a96e",
+    questions: [
+      { q: "¿Cuál es la característica principal del periodo embrionario u organogénesis?", a: "Es la etapa en que las tres capas germinales (ectodermo, mesodermo y endodermo) dan origen a tejidos y órganos específicos, estableciendo los principales sistemas del cuerpo." },
+      { q: "¿Por qué el periodo embrionario es el más susceptible a la inducción de defectos congénitos?", a: "Porque las poblaciones de células troncales están estableciendo los primordios de cada órgano, siendo altamente sensibles a factores genéticos y ambientales." },
+      { q: "¿Qué estructura se forma a partir del engrosamiento del ectodermo suprayacente a la notocorda?", a: "La placa neural, cuyas células constituyen el neuroectodermo." },
+      { q: "¿Cómo se denomina el proceso mediante el cual la placa neural forma el tubo neural?", a: "Neurulación." },
+      { q: "¿En qué región del embrión inicia la fusión de los pliegues neurales y en qué dirección procede?", a: "Inicia en la región cervical (quinta somita) y procede en dirección craneocaudal." },
+      { q: "¿Cuándo ocurre el cierre de los neuróporos anterior y posterior?", a: "El neuróporo anterior cierra cerca del día 25, y el posterior el día 28." },
+      { q: "¿Qué población celular es conocida como la 'cuarta capa germinal' debido a su vasta contribución a tejidos?", a: "Las células de la cresta neural (CCN)." },
+      { q: "Mencione tres derivados importantes de las células de la cresta neural.", a: "El esqueleto craneofacial, los ganglios sensitivos (raíz dorsal) y los melanocitos en la piel." },
+      { q: "¿Qué proteína, al estar en concentraciones altas, induce al ectodermo a formar epidermis en lugar de tejido neural?", a: "La proteína morfogenética ósea 4 (BMP4)." },
+      { q: "¿Qué moléculas actúan como inhibidores de BMP para permitir la formación del tejido neural?", a: "Noggina, cordina y folistatina." },
+      { q: "¿Qué estructuras sensoriales se hacen visibles como engrosamientos ectodérmicos al cerrarse el tubo neural?", a: "Las placodas óticas y las placodas del cristalino." },
+      { q: "¿Cuáles son las tres regiones en las que se divide el mesodermo intraembrionario cerca del día 17?", a: "Mesodermo paraxial, mesodermo intermedio y mesodermo de la placa lateral." },
+      { q: "¿Cómo se organiza el mesodermo paraxial al inicio de la tercera semana?", a: "En segmentos llamados somitómeros en la cabeza y somitas desde la región occipital a la caudal." },
+      { q: "¿A qué ritmo aparecen los somitas y para qué sirve su conteo?", a: "Aparecen unos tres pares por día; su conteo permite calcular con precisión la edad del embrión durante este periodo." },
+      { q: "¿En qué componentes se diferencia un somita?", a: "En esclerotoma (ventromedial), miotoma (regiones dorsomedial y ventrolateral) y dermatoma (dorsal)." },
+      { q: "¿Qué estructuras definitivas forma el esclerotoma?", a: "Las vértebras y las costillas." },
+      { q: "¿De qué capa mesodérmica derivan las estructuras urogenitales?", a: "Del mesodermo intermedio." },
+      { q: "¿En qué dos hojas se divide el mesodermo de la placa lateral?", a: "En la capa mesodérmica somática (parietal) y la capa mesodérmica esplácnica (visceral)." },
+      { q: "¿Qué cavidad queda revestida por las capas del mesodermo de la placa lateral?", a: "La cavidad intraembrionaria (celoma intraembrionario)." },
+      { q: "¿Qué es la somatopleura?", a: "Es la combinación de la capa parietal del mesodermo de la placa lateral y el ectodermo suprayacente." },
+      { q: "¿Qué es la esplacnopleura?", a: "Es la combinación de la capa visceral del mesodermo de la placa lateral y el endodermo subyacente." },
+      { q: "¿Cómo se denomina la formación de vasos sanguíneos a partir de islotes sanguíneos?", a: "Vasculogénesis." },
+      { q: "¿Qué factor de crecimiento es decisivo en la inducción de hemangioblastos y la angiogénesis?", a: "El factor de crecimiento endotelial vascular (VEGF)." },
+      { q: "¿Cuál es el principal derivado de la capa germinal endodérmica?", a: "El tubo digestivo." },
+      { q: "¿Qué procesos mecánicos llevan a la formación del tubo intestinal?", a: "El plegamiento cefalocaudal y el plegamiento lateral del embrión." },
+      { q: "¿Cuáles son las tres regiones principales del intestino primitivo?", a: "Intestino anterior, intestino medio e intestino posterior." },
+      { q: "¿Cómo se comunica el intestino medio con el saco vitelino?", a: "A través del conducto vitelino (pedículo vitelino)." },
+      { q: "¿Qué membrana separa el estomodeo del intestino anterior?", a: "La membrana orofaríngea." },
+      { q: "¿Qué estructura forma la parte terminal del intestino posterior y se comunica con el alantoides?", a: "La cloaca." },
+      { q: "Mencione tres derivados endodérmicos que no formen parte del tubo digestivo propiamente dicho.", a: "El revestimiento epitelial del aparato respiratorio, el parénquima de la tiroides y el revestimiento de la vejiga urinaria." },
+      { q: "¿Qué genes regulan la determinación del patrón craneocaudal del eje embrionario?", a: "Los genes de homeosecuencia (genes HOX)." },
+      { q: "¿Qué parámetros se utilizan para expresar la edad del embrión durante el segundo mes?", a: "La longitud cefalocaudal (LCC) expresada en milímetros." },
+      { q: "¿Cuándo aparecen las yemas de las extremidades y qué forma tienen inicialmente?", a: "Aparecen al inicio de la quinta semana con forma de paleta." },
+      { q: "¿Qué vitamina es fundamental ingerir antes y durante el embarazo para prevenir defectos del tubo neural?", a: "El ácido fólico (400 µg/día)." },
+      { q: "¿Qué defecto resulta si el tubo neural no se cierra en su región craneal?", a: "Anencefalia." },
+    ]
+  },
+  {
+    id: 1,
+    name: "Tubo Intestinal y Cavidades",
+    tagBg: "#1a2d35", tagColor: "#7eb8c9",
+    questions: [
+      { q: "¿Qué proceso embrionario da origen a la configuración de 'un tubo sobre otro' al final de la cuarta semana?", a: "La neurulación pliega el ectodermo dorsalmente para formar el tubo neural, mientras el endodermo se pliega ventralmente para formar el tubo intestinal." },
+      { q: "¿Cómo se divide el mesodermo de la placa lateral y qué cavidad se origina entre sus capas?", a: "Se divide en una capa visceral (esplácnica) y una capa parietal (somática); el espacio entre ambas es la cavidad corporal primitiva o celoma intraembrionario." },
+      { q: "¿Qué estructuras forman los pliegues de la pared lateral del cuerpo?", a: "Están integrados por la capa parietal del mesodermo de la placa lateral, el ectodermo superficial y células de los somitas adyacentes." },
+      { q: "¿Qué es la somatopleura y qué es la esplacnopleura?", a: "La somatopleura es la capa parietal del mesodermo lateral con el ectodermo; la esplacnopleura es la capa visceral del mesodermo lateral con el endodermo subyacente." },
+      { q: "¿Cuándo se fusionan los pliegues laterales para cerrar la pared ventral y qué región queda abierta inicialmente?", a: "Al final de la cuarta semana se fusionan en la línea media, excepto en la región del pedículo de fijación (futuro cordón umbilical)." },
+      { q: "¿Cuál es la única comunicación que persiste temporalmente entre el intestino medio y el saco vitelino?", a: "El conducto o pedículo vitelinos." },
+      { q: "¿Qué sucede con el saco y el conducto vitelinos entre el segundo y tercer mes de gestación?", a: "Ambos degeneran y el conducto se incorpora al cordón umbilical." },
+      { q: "¿De qué capa embrionaria derivan las hojas parietales de las membranas serosas (pleura, peritoneo y pericardio)?", a: "Derivan de las células de la capa parietal del mesodermo de la placa lateral que adquieren características mesoteliales." },
+      { q: "¿Cómo se forma el mesenterio dorsal y cuál es su función principal?", a: "Se forma por la fusión de las hojas visceral y parietal del mesodermo lateral; fija el tubo intestinal a la pared posterior y sirve de vía para vasos y nervios." },
+      { q: "¿Cuál es la extensión anatómica del mesenterio dorsal?", a: "Se extiende sin interrupción desde el límite caudal del intestino anterior hasta el extremo terminal del intestino posterior." },
+      { q: "¿Qué regiones del tubo digestivo poseen mesenterio ventral y de qué estructura deriva?", a: "Deriva del tabique transverso y solo existe en la región terminal del esófago, el estómago y la porción proximal del duodeno." },
+      { q: "¿Qué defecto congénito se caracteriza por la ubicación del corazón fuera del tórax debido a una falla en el cierre de la pared ventral?", a: "Ectopia cordis." },
+      { q: "¿En qué consiste la gastrosquisis y cuál es su localización típica respecto al ombligo?", a: "Es la herniación de los intestinos por la pared abdominal, generalmente a la derecha del ombligo." },
+      { q: "¿Qué anomalía resulta de la falla del cierre de la pared ventral en la región pélvica?", a: "Extrofia vesical (o cloacal si el defecto es más amplio)." },
+      { q: "¿Qué es el tabique transverso y dónde se ubica inicialmente?", a: "Es una placa gruesa de tejido mesodérmico que ocupa el espacio entre la cavidad torácica y el pedículo del saco vitelino." },
+      { q: "¿Qué aberturas deja inicialmente el tabique transverso entre las cavidades torácica y abdominal?", a: "Los conductos pericardioperitoneales." },
+      { q: "¿Cómo afectan las yemas pulmonares en crecimiento a los conductos pericardioperitoneales?", a: "Se expanden caudolateralmente por ellos y luego hacia el mesénquima de la pared corporal al volverse insuficientes los conductos." },
+      { q: "¿Qué estructuras se encuentran alojadas dentro de los pliegues pleuropericárdicos?", a: "Las venas cardinales comunes y los nervios frénicos." },
+      { q: "¿En qué se transforman las membranas pleuropericárdicas en el adulto tras su fusión?", a: "Dan origen al pericardio fibroso." },
+      { q: "¿Qué estructuras dividen la cavidad torácica en una pericárdica y dos pleurales?", a: "Las membranas pleuropericárdicas." },
+      { q: "¿Qué estructuras cierran parcialmente la comunicación entre las cavidades pleural y peritoneal?", a: "Los pliegues pleuroperitoneales." },
+      { q: "¿Cuándo aparecen y cuándo se fusionan las membranas pleuroperitoneales con el mesenterio del esófago?", a: "Aparecen al inicio de la quinta semana y se fusionan para la séptima semana." },
+      { q: "Mencione los cuatro componentes embrionarios que forman el diafragma definitivo.", a: "1) El tabique transverso, 2) las dos membranas pleuroperitoneales, 3) el mesenterio dorsal del esófago y 4) componentes musculares de los somitas C3 a C5." },
+      { q: "¿Qué parte del diafragma se origina específicamente de las membranas pleuroperitoneales?", a: "El tendón central del diafragma y el andamiaje de tejido conectivo periférico." },
+      { q: "¿De dónde provienen los mioblastos que forman la musculatura del diafragma?", a: "De los somitas de los segmentos cervicales tres a cinco (C3-C5)." },
+      { q: "¿Por qué el nervio frénico tiene un trayecto tan largo desde el cuello hasta el tórax?", a: "Porque el diafragma se origina en la región cervical y luego se desplaza caudalmente por el crecimiento diferencial del embrión." },
+      { q: "¿Cuáles son los niveles medulares que dan origen a la inervación motora y sensitiva del diafragma?", a: "C3, C4 y C5." },
+      { q: "¿Cuál es la malformación diafragmática más frecuente y en qué lado suele presentarse?", a: "La hernia diafragmática congénita (de Bochdalek), más frecuente en el lado izquierdo." },
+      { q: "¿Cuál es la causa embriológica de la hernia diafragmática de Bochdalek?", a: "La falta de cierre de una o ambas membranas pleuroperitoneales." },
+      { q: "¿Por qué la hernia diafragmática suele ser una urgencia médica letal al nacer?", a: "Porque la presencia de vísceras abdominales en el tórax impide el desarrollo normal de los pulmones (hipoplasia pulmonar)." },
+      { q: "¿Qué relación existe entre la falta de longitud del esófago y la hernia diafragmática hiatal?", a: "Si el esófago no se elonga lo suficiente, mantiene al estómago en la región torácica impidiendo su descenso normal." },
+      { q: "¿Qué estructura forma los pilares del diafragma?", a: "El mesenterio dorsal del esófago." },
+      { q: "¿Qué estructuras vasculares atraviesan el pedículo portal en el borde libre del omento menor?", a: "El colédoco, la vena porta y la arteria hepática (tríada porta)." },
+      { q: "¿De qué manera el crecimiento del hígado influye en la formación de la cavidad abdominal?", a: "Su rápido crecimiento hace que la cavidad abdominal sea temporalmente pequeña, provocando la herniación umbilical fisiológica del intestino." },
+      { q: "¿Cuál es la analogía anatómica que describe la relación entre las capas de las membranas serosas y los órganos?", a: "Es similar a hundir un dedo en un globo inflado: la pared pegada al dedo es la capa visceral y el resto es la capa parietal." },
+    ]
+  },
+  {
+    id: 2,
+    name: "Feto y Placenta",
+    tagBg: "#1e2b1e", tagColor: "#6dbf8a",
+    questions: [
+      { q: "¿A partir de qué momento inicia el periodo fetal y cuál es su característica principal?", a: "Inicia al comienzo de la novena semana y se caracteriza por la maduración de los tejidos y órganos, junto con el crecimiento rápido del cuerpo." },
+      { q: "¿Cuál es la duración promedio de la gestación en días y semanas tras la fecundación?", a: "La gestación dura 266 días o 38 semanas tras la fecundación (o 280 días desde la fecha de última regla)." },
+      { q: "¿Cómo cambia la proporción del tamaño de la cabeza respecto a la longitud vértice-talón (LVT) desde el quinto mes hasta el nacimiento?", a: "Al inicio del quinto mes, la cabeza mide cerca de un tercio de la LVT; al momento del nacimiento, se aproxima a una cuarta parte de esta." },
+      { q: "¿En qué semana del desarrollo fetal se pueden identificar los centros de osificación primarios en huesos largos y cráneo?", a: "Se identifican a la semana 12." },
+      { q: "¿A partir de qué semana es posible determinar el sexo del feto mediante una exploración externa como el ultrasonido?", a: "A partir de la semana 12, debido al desarrollo de los genitales externos." },
+      { q: "¿Cuándo ocurre el retorno de las asas intestinales a la cavidad abdominal tras la hernia umbilical fisiológica?", a: "El retorno ocurre hacia la semana 12." },
+      { q: "¿En qué periodo de la gestación el incremento de peso es más llamativo y por qué?", a: "Durante los últimos dos meses, cuando se gana alrededor del 50% del peso total del recién nacido a término." },
+      { q: "¿Qué es el lanugo y en qué mes se hace visible por primera vez?", a: "Es un vello fino que cubre al feto y es visible durante el quinto mes." },
+      { q: "¿A qué edad gestacional un feto tiene un 90% de probabilidades de sobrevivir si nace prematuramente?", a: "Entre los 6.5 y los 7 meses, cuando pesa cerca de 1,100 g." },
+      { q: "¿Cuál es la función de la vérnix caseosa y de qué está compuesta?", a: "Es una sustancia lipídica blanquecina formada por secreciones de las glándulas sebáceas que protege la piel de la maceración por el líquido amniótico." },
+      { q: "¿Qué parámetro se utiliza para determinar la fecha probable de parto basándose en la fecha de última regla (FUR)?", a: "Se agregan 280 días o 40 semanas al primer día de la FUR." },
+      { q: "¿Cuáles son los dos componentes principales de la placenta?", a: "Un componente fetal, derivado del corion frondoso, y un componente materno, derivado de la decidua basal." },
+      { q: "¿Cómo transforman las células citotrofoblásticas las arterias espirales maternas para mejorar el flujo sanguíneo?", a: "Mediante una invasión endovascular, sustituyen a las células endoteliales maternas para crear vasos híbridos de mayor diámetro y resistencia baja." },
+      { q: "¿A partir de qué mes desaparecen las células citotrofoblásticas de las vellosidades terciarias para facilitar el intercambio?", a: "Para el inicio del cuarto mes." },
+      { q: "¿Qué estructuras separan la circulación materna de la fetal en una placenta madura?", a: "Únicamente el sincitio y la pared endotelial de los vasos sanguíneos fetales." },
+      { q: "¿Por qué la placenta humana se clasifica como de tipo hemocorial?", a: "Porque la sangre materna en los espacios intervellosos está en contacto directo con el corion (sincitio) fetal." },
+      { q: "¿Qué nombre reciben los compartimientos en los que queda dividida la cara materna de la placenta por los tabiques deciduales?", a: "Se denominan cotiledones (existen entre 15 y 20)." },
+      { q: "¿Cuál es el volumen aproximado de sangre materna alojado en los espacios intervellosos de una placenta madura y cada cuánto se recambia?", a: "Alojan unos 150 mL de sangre, que se recambia tres o cuatro veces por minuto." },
+      { q: "¿Qué gas atraviesa la membrana placentaria por difusión simple y de qué depende principalmente su transporte al feto?", a: "El oxígeno; su llegada depende del aporte (flujo sanguíneo), no de la velocidad de difusión." },
+      { q: "¿A partir de qué semana el feto adquiere inmunidad pasiva mediante el transporte de anticuerpos maternos (IgG)?", a: "Alrededor de las 14 semanas." },
+      { q: "¿Qué hormona sintetizada por la placenta mantiene el embarazo si el cuerpo lúteo es eliminado al final del cuarto mes?", a: "La progesterona." },
+      { q: "¿Cuál es la función de la somatomamotropina placentaria en el metabolismo materno?", a: "Otorga al feto prioridad para utilizar la glucosa de la sangre materna y tiene un efecto diabetogénico en la madre." },
+      { q: "¿Qué estructuras atraviesan el anillo umbilical primitivo al final de la quinta semana?", a: "El pedículo de fijación (alantoides y vasos umbilicales), el conducto vitelino y el conducto que conecta las cavidades corporales." },
+      { q: "¿Qué tejido protege los vasos umbilicales y es rico en proteoglucanos?", a: "La gelatina de Wharton." },
+      { q: "¿Cuáles son las tres funciones principales del líquido amniótico?", a: "Amortiguar movimientos bruscos, impedir la adhesión del embrión al amnios y permitir los movimientos fetales." },
+      { q: "¿Cuál es el volumen aproximado de líquido amniótico que el feto deglute diariamente a partir del quinto mes?", a: "Alrededor de 400 mL diarios." },
+      { q: "¿Con qué condiciones clínicas se asocia el polihidramnios (exceso de líquido)?", a: "Con la anencefalia y la atresia esofágica, que impiden la deglución normal del líquido." },
+      { q: "¿Cuáles son las tres fases del trabajo de parto?", a: "1) Borramiento y dilatación del cuello uterino, 2) expulsión del feto y 3) alumbramiento (expulsión de la placenta y membranas)." },
+      { q: "¿Qué diferencia al corion frondoso del corion leve al final del tercer mes?", a: "El corion frondoso mantiene sus vellosidades y forma la placenta; el corion leve pierde sus vellosidades y es liso." },
+      { q: "¿Cómo se origina la membrana amniocoriónica?", a: "Por la fusión del amnios y el corion, que oblitera la cavidad coriónica." },
+      { q: "¿Qué tipo de gemelos resultan de la fecundación de dos ovocitos distintos por dos espermatozoides diferentes?", a: "Gemelos dicigóticos o fraternos." },
+      { q: "¿En qué etapa del desarrollo ocurre comúnmente la división de un cigoto para dar lugar a gemelos monocigóticos con placentas y sacos amnióticos independientes?", a: "En la etapa bicelular." },
+      { q: "¿Qué riesgo clínico presentan los gemelos monocigóticos que comparten una placenta con anastomosis vasculares desequilibradas?", a: "El síndrome de transfusión fetofetal, donde un gemelo recibe más flujo sanguíneo que el otro." },
+      { q: "¿Cuál es la causa principal de mortalidad infantil y prematurez según las correlaciones clínicas del capítulo?", a: "El nacimiento pretérmino (antes de las 37 semanas)." },
+      { q: "¿Qué marcador bioquímico se eleva en el líquido amniótico y suero materno ante defectos del tubo neural u onfalocele?", a: "La alfa-fetoproteína (AFP)." },
+    ]
+  }
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  queue: [],
+  current: 0,
+  mode: 'flashcard',
+  correct: 0,
+  wrong: 0,
+  missed: [],
+  lastQueue: [],
+  lastTopics: [],
+  lastMode: 'flashcard'
+};
+
+let selectedTopics = [];
+
+// ============================================================
+// WELCOME
+// ============================================================
+function toggleTopic(card) {
+  const idx = parseInt(card.dataset.topic);
+  const pos = selectedTopics.indexOf(idx);
+  if (pos === -1) {
+    selectedTopics.push(idx);
+    card.classList.add('selected');
+  } else {
+    selectedTopics.splice(pos, 1);
+    card.classList.remove('selected');
+  }
+  document.getElementById('btnSelected').disabled = selectedTopics.length === 0;
+  document.getElementById('btnSelected').textContent = selectedTopics.length > 0
+    ? `Iniciar selección (${selectedTopics.length} tema${selectedTopics.length > 1 ? 's' : ''})`
+    : 'Iniciar selección';
+}
+
+function buildQueue(topicIds) {
+  let q = [];
+  topicIds.forEach(id => {
+    TOPICS[id].questions.forEach((item, i) => {
+      q.push({ ...item, topicId: id, localIdx: i });
+    });
+  });
+  return q;
+}
+
+function startAll(mode) {
+  launchTest([0, 1, 2], mode);
+}
+
+function startSelected(mode) {
+  if (selectedTopics.length === 0) return;
+  launchTest([...selectedTopics].sort(), mode);
+}
+
+function launchTest(topicIds, mode) {
+  const queue = buildQueue(topicIds);
+  state.queue = queue;
+  state.lastQueue = queue.map(q => ({ ...q }));
+  state.lastTopics = topicIds;
+  state.lastMode = mode;
+  state.current = 0;
+  state.correct = 0;
+  state.wrong = 0;
+  state.missed = [];
+  state.mode = mode;
+  showScreen('quiz');
+  renderQuestion();
+}
+
+// ============================================================
+// QUIZ
+// ============================================================
+function renderQuestion() {
+  const q = state.queue[state.current];
+  const total = state.queue.length;
+  const topic = TOPICS[q.topicId];
+
+  // header
+  const tag = document.getElementById('topicTag');
+  tag.textContent = topic.name;
+  tag.style.setProperty('--tag-bg', topic.tagBg);
+  tag.style.setProperty('--tag-color', topic.tagColor);
+
+  document.getElementById('qNum').textContent = state.current + 1;
+  document.getElementById('qTotal').textContent = total;
+  document.getElementById('progressFill').style.width = ((state.current / total) * 100) + '%';
+  document.getElementById('questionNum').textContent = String(state.current + 1).padStart(2, '0') + ' ·';
+  document.getElementById('questionText').textContent = q.q;
+
+  if (state.mode === 'flashcard') {
+    document.getElementById('flashcardMode').style.display = 'block';
+    document.getElementById('mcMode').style.display = 'none';
+    const fc = document.getElementById('flashcard');
+    fc.classList.remove('revealed');
+    document.getElementById('flashcardAnswer').textContent = q.a;
+    document.getElementById('flashcardActions').style.display = 'none';
+    // reset: force sibling check via re-render
+    document.getElementById('flashcardActions').style.display = 'none';
+  } else {
+    document.getElementById('flashcardMode').style.display = 'none';
+    document.getElementById('mcMode').style.display = 'block';
+    renderChoices(q);
+    document.getElementById('feedback').className = 'feedback';
+    document.getElementById('feedback').innerHTML = '';
+    document.getElementById('nextBtn').style.display = 'none';
+  }
+}
+
+function revealFlashcard() {
+  const fc = document.getElementById('flashcard');
+  fc.classList.add('revealed');
+  document.getElementById('flashcardActions').style.display = 'flex';
+}
+
+function markFlashcard(knew) {
+  const q = state.queue[state.current];
+  if (knew) {
+    state.correct++;
+  } else {
+    state.wrong++;
+    state.missed.push(q);
+  }
+  nextQuestion();
+}
+
+function renderChoices(q) {
+  // Build distractors from same topic + other topics
+  const allQ = state.queue.filter((_, i) => i !== state.current);
+  const shuffled = [...allQ].sort(() => Math.random() - 0.5);
+  const distractors = shuffled.slice(0, 3).map(x => x.a);
+
+  const options = [q.a, ...distractors].sort(() => Math.random() - 0.5);
+  const labels = ['A', 'B', 'C', 'D'];
+
+  const container = document.getElementById('choices');
+  container.innerHTML = '';
+
+  options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<span class="choice-label">${labels[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => checkAnswer(btn, opt, q.a, options, q);
+    container.appendChild(btn);
+  });
+}
+
+function checkAnswer(btn, chosen, correct, allOptions, q) {
+  const btns = document.querySelectorAll('.choice-btn');
+  btns.forEach(b => b.disabled = true);
+
+  const allAnswers = document.querySelectorAll('.choice-btn span:last-child');
+  btns.forEach((b, i) => {
+    if (allAnswers[i].textContent === correct) b.classList.add('correct');
+  });
+
+  const fb = document.getElementById('feedback');
+  if (chosen === correct) {
+    btn.classList.add('correct');
+    state.correct++;
+    fb.className = 'feedback correct-fb show';
+    fb.textContent = '✓ Correcto';
+  } else {
+    btn.classList.add('wrong');
+    state.wrong++;
+    state.missed.push(q);
+    fb.className = 'feedback wrong-fb show';
+    fb.textContent = '✗ Incorrecto. La respuesta correcta está marcada en verde.';
+  }
+
+  document.getElementById('nextBtn').style.display = 'inline-block';
+}
+
+function nextQuestion() {
+  state.current++;
+  if (state.current >= state.queue.length) {
+    showResults();
+  } else {
+    renderQuestion();
+  }
+}
+
+// ============================================================
+// RESULTS
+// ============================================================
+function showResults() {
+  const total = state.correct + state.wrong;
+  const pct = total > 0 ? Math.round((state.correct / total) * 100) : 0;
+
+  document.getElementById('scoreDisplay').textContent = pct + '%';
+  document.getElementById('scoreLabel').textContent = `${state.correct} de ${total} correctas`;
+  document.getElementById('statCorrect').textContent = state.correct;
+  document.getElementById('statWrong').textContent = state.wrong;
+  document.getElementById('statTotal').textContent = total;
+
+  let msg = '';
+  if (pct === 100) msg = 'Perfecto. Dominás el material completamente.';
+  else if (pct >= 80) msg = 'Muy bien. Algunos conceptos para repasar.';
+  else if (pct >= 60) msg = 'Bien encaminado. Revisá las preguntas marcadas.';
+  else if (pct >= 40) msg = 'Hay trabajo por hacer. No te rindas.';
+  else msg = 'Volvé a estudiar el material y repetí el test.';
+
+  document.getElementById('resultMessage').textContent = msg;
+
+  const missedList = document.getElementById('missedList');
+  const missedSection = document.getElementById('missedSection');
+  missedList.innerHTML = '';
+
+  if (state.missed.length > 0) {
+    missedSection.style.display = 'block';
+    state.missed.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'missed-item';
+      div.innerHTML = `<div class="missed-q">${item.q}</div><div class="missed-a">${item.a}</div>`;
+      missedList.appendChild(div);
+    });
+  } else {
+    missedSection.style.display = 'none';
+  }
+
+  showScreen('results');
+}
+
+function restartSame() {
+  state.queue = state.lastQueue.map(q => ({ ...q }));
+  state.current = 0;
+  state.correct = 0;
+  state.wrong = 0;
+  state.missed = [];
+  state.mode = state.lastMode;
+  showScreen('quiz');
+  renderQuestion();
+}
+
+function goHome() {
+  showScreen('welcome');
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  const quiz = document.getElementById('quiz');
+  if (!quiz.classList.contains('active')) return;
+
+  if (state.mode === 'flashcard') {
+    const fc = document.getElementById('flashcard');
+    if (e.key === ' ' || e.key === 'Enter') {
+      if (!fc.classList.contains('revealed')) revealFlashcard();
+    }
+    if (fc.classList.contains('revealed')) {
+      if (e.key === 'ArrowRight' || e.key === '1') markFlashcard(true);
+      if (e.key === 'ArrowLeft' || e.key === '0') markFlashcard(false);
+    }
+  } else {
+    const nextBtn = document.getElementById('nextBtn');
+    if ((e.key === 'Enter' || e.key === ' ') && nextBtn.style.display !== 'none') {
+      nextQuestion();
+    }
+    const labels = ['a','b','c','d'];
+    const idx = labels.indexOf(e.key.toLowerCase());
+    if (idx !== -1) {
+      const btns = document.querySelectorAll('.choice-btn');
+      if (btns[idx] && !btns[idx].disabled) btns[idx].click();
+    }
+  }
+});
+</script>
+</body>
+</html>
